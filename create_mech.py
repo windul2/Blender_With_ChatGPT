@@ -1,4 +1,4 @@
-"""Create a reference-inspired V10 stylized chibi mech, render it, and export assets.
+"""Create a silhouette-priority V11 stylized chibi mech, render it, and export assets.
 
 Run inside Blender:
     blender --background --factory-startup --python create_mech.py -- \
@@ -467,8 +467,8 @@ def add_torso(materials: dict[str, bpy.types.Material]) -> None:
     cylinder("NeckGimbal", (0.0, 0.0, 8.36), 0.42, 0.58, dark, vertices=24, bevel=0.05)
     bevelled_box(
         "TorsoCore",
-        (0.0, 0.04, 6.70),
-        (1.40, 1.00, 1.58),
+        (0.0, 0.02, 6.68),
+        (1.22, 0.88, 1.42),
         dark,
         bevel=0.12,
         bevel_segments=4,
@@ -476,8 +476,8 @@ def add_torso(materials: dict[str, bpy.types.Material]) -> None:
     )
     bevelled_box(
         "ChestShell",
-        (0.0, -0.32, 7.08),
-        (1.94, 0.80, 1.30),
+        (0.0, -0.28, 7.00),
+        (1.70, 0.72, 1.12),
         white,
         rotation=(math.radians(8), 0.0, 0.0),
         bevel=0.10,
@@ -529,8 +529,8 @@ def add_torso(materials: dict[str, bpy.types.Material]) -> None:
     )
     bevelled_box(
         "PelvisMain",
-        (0.0, -0.08, 4.74),
-        (1.46, 0.98, 0.84),
+        (0.0, -0.06, 4.72),
+        (1.34, 0.90, 0.76),
         white,
         bevel=0.10,
         bevel_segments=4,
@@ -637,7 +637,7 @@ def add_arm(side: str, sign: int, materials: dict[str, bpy.types.Material]) -> N
     bevelled_box(
         f"{side}_UpperArm",
         (shoulder_x + sign * 0.22, 0.00, 5.92),
-        (0.48, 0.52, 0.68),
+        (0.42, 0.46, 0.60),
         dark,
         rotation=(math.radians(2), 0.0, math.radians(sign * -4)),
         bevel=0.06,
@@ -657,7 +657,7 @@ def add_arm(side: str, sign: int, materials: dict[str, bpy.types.Material]) -> N
     bevelled_box(
         f"{side}_Forearm",
         (shoulder_x + sign * 0.16, -0.04, 4.18),
-        (0.56, 0.60, 0.76),
+        (0.48, 0.52, 0.66),
         white,
         rotation=(math.radians(-4), 0.0, math.radians(sign * -3)),
         bevel=0.06,
@@ -757,7 +757,7 @@ def add_leg(side: str, sign: int, materials: dict[str, bpy.types.Material]) -> N
     bevelled_box(
         f"{side}_ThighCore",
         (hip_x, 0.00, 3.32),
-        (0.48, 0.50, 0.86),
+        (0.44, 0.46, 0.74),
         dark,
         rotation=(math.radians(3), 0.0, math.radians(sign * -2)),
         bevel=0.06,
@@ -786,7 +786,7 @@ def add_leg(side: str, sign: int, materials: dict[str, bpy.types.Material]) -> N
     bevelled_box(
         f"{side}_Shin",
         (hip_x, -0.02, 1.42),
-        (0.52, 0.58, 0.84),
+        (0.46, 0.52, 0.74),
         white,
         rotation=(math.radians(-6), 0.0, math.radians(sign * -2)),
         bevel=0.06,
@@ -814,7 +814,7 @@ def add_leg(side: str, sign: int, materials: dict[str, bpy.types.Material]) -> N
     bevelled_box(
         f"{side}_FootBase",
         (hip_x, 0.06, -0.04),
-        (0.64, 0.96, 0.24),
+        (0.58, 0.86, 0.20),
         dark,
         rotation=(math.radians(4), 0.0, 0.0),
         bevel=0.05,
@@ -1139,7 +1139,7 @@ def add_reference_v3_details(materials: dict[str, bpy.types.Material]) -> None:
         bevelled_box(
             f"{side}_FistCoverV3",
             (sign * 2.92, -0.04, 2.96),
-            (0.56, 0.58, 0.38),
+            (0.60, 0.62, 0.42),
             white,
             rotation=(math.radians(4), 0.0, math.radians(sign * -4)),
             bevel=0.04,
@@ -1376,6 +1376,261 @@ def add_reference_v10_refinements(materials: dict[str, bpy.types.Material]) -> N
             bevel=0.01,
         )
 
+
+def add_v11_silhouette_overrides(materials: dict[str, bpy.types.Material]) -> None:
+    """Large silhouette-first shell pieces for V11."""
+    white = materials["white"]
+    dark = materials["dark"]
+    gray = materials["gray"]
+    blue = materials["blue"]
+    red = materials["red"]
+
+    # Torso: smaller core, smoother flowing armor around it.
+    bevelled_box(
+        "V11_ChestArc",
+        (0.0, -0.34, 7.12),
+        (1.86, 0.48, 0.66),
+        white,
+        rotation=(math.radians(12), 0.0, 0.0),
+        bevel=0.06,
+        bevel_segments=3,
+        subsurf=2,
+    )
+    bevelled_box(
+        "V11_ChestLowerArc",
+        (0.0, -0.52, 6.34),
+        (1.20, 0.34, 0.48),
+        dark,
+        rotation=(math.radians(-8), 0.0, 0.0),
+        bevel=0.04,
+        bevel_segments=3,
+        subsurf=1,
+    )
+    bevelled_box(
+        "V11_AbdomenWedge",
+        (0.0, -0.54, 5.66),
+        (0.88, 0.28, 0.44),
+        dark,
+        rotation=(math.radians(-10), 0.0, 0.0),
+        bevel=0.04,
+        bevel_segments=3,
+        subsurf=1,
+    )
+    bevelled_box(
+        "V11_PelvisFrontBulge",
+        (0.0, -0.88, 4.72),
+        (0.96, 0.18, 0.44),
+        white,
+        rotation=(math.radians(-10), 0.0, 0.0),
+        bevel=0.04,
+        bevel_segments=3,
+        subsurf=1,
+    )
+    for side in (-1, 1):
+        bevelled_box(
+            f"V11_RibShell_{side}",
+            (side * 1.18, -0.38, 6.78),
+            (0.50, 0.38, 0.74),
+            white,
+            rotation=(math.radians(8), math.radians(side * 18), math.radians(side * -10)),
+            bevel=0.04,
+            bevel_segments=3,
+            subsurf=1,
+        )
+        bevelled_box(
+            f"V11_PelvisFlank_{side}",
+            (side * 1.22, -0.10, 4.62),
+            (0.44, 0.70, 0.44),
+            white,
+            rotation=(0.0, math.radians(side * 8), math.radians(side * 8)),
+            bevel=0.04,
+            bevel_segments=3,
+            subsurf=1,
+        )
+        cylinder(
+            f"V11_HipDiscGlow_{side}",
+            (side * 1.20, -0.02, 4.14),
+            0.18,
+            0.08,
+            gray,
+            rotation=(0.0, math.radians(90), 0.0),
+            vertices=22,
+            bevel=0.012,
+        )
+
+    # Shoulders: less boxy, more rounded large shoulder shells.
+    for side, sign in (("L", -1), ("R", 1)):
+        sphere(
+            f"V11_{side}_ShoulderDome",
+            (sign * 2.34, -0.08, 7.20),
+            (0.92, 0.82, 0.78),
+            white,
+            segments=34,
+            rings=20,
+        )
+        bevelled_box(
+            f"V11_{side}_ShoulderCap",
+            (sign * 2.52, -0.12, 7.14),
+            (0.84, 0.76, 0.70),
+            white,
+            rotation=(math.radians(4), math.radians(sign * -12), math.radians(sign * -12)),
+            bevel=0.05,
+            bevel_segments=3,
+            subsurf=1,
+        )
+        bevelled_box(
+            f"V11_{side}_UpperArmSleeve",
+            (sign * 2.46, -0.02, 5.90),
+            (0.42, 0.42, 0.66),
+            dark,
+            rotation=(math.radians(4), 0.0, math.radians(sign * -4)),
+            bevel=0.03,
+            bevel_segments=3,
+            subsurf=1,
+        )
+        bevelled_box(
+            f"V11_{side}_ForearmGuard",
+            (sign * 2.62, -0.10, 4.08),
+            (0.54, 0.56, 0.74),
+            white,
+            rotation=(math.radians(-6), 0.0, math.radians(sign * -4)),
+            bevel=0.04,
+            bevel_segments=3,
+            subsurf=1,
+        )
+        bevelled_box(
+            f"V11_{side}_WristCuff",
+            (sign * 2.82, -0.04, 3.28),
+            (0.26, 0.28, 0.18),
+            gray,
+            rotation=(0.0, 0.0, math.radians(sign * -4)),
+            bevel=0.02,
+            bevel_segments=2,
+            subsurf=1,
+        )
+        bevelled_box(
+            f"V11_{side}_FistBlock",
+            (sign * 2.98, -0.04, 2.94),
+            (0.56, 0.58, 0.38),
+            white,
+            rotation=(math.radians(4), 0.0, math.radians(sign * -6)),
+            bevel=0.04,
+            bevel_segments=3,
+            subsurf=1,
+        )
+
+    # Legs: curved thigh/shin shells and heavier feet.
+    for side, sign in (("L", -1), ("R", 1)):
+        bevelled_box(
+            f"V11_{side}_ThighShellOuter",
+            (sign * 0.92, -0.10, 3.20),
+            (0.46, 0.42, 0.76),
+            white,
+            rotation=(math.radians(6), math.radians(sign * 6), math.radians(sign * -4)),
+            bevel=0.04,
+            bevel_segments=3,
+            subsurf=1,
+        )
+        bevelled_box(
+            f"V11_{side}_ThighShellFront",
+            (sign * 0.92, -0.50, 3.12),
+            (0.34, 0.12, 0.58),
+            white,
+            rotation=(math.radians(-6), 0.0, math.radians(sign * -4)),
+            bevel=0.02,
+            bevel_segments=2,
+            subsurf=1,
+        )
+        bevelled_box(
+            f"V11_{side}_KneeBulge",
+            (sign * 0.90, -0.40, 2.28),
+            (0.30, 0.16, 0.26),
+            white,
+            rotation=(math.radians(12), 0.0, math.radians(sign * -4)),
+            bevel=0.02,
+            bevel_segments=2,
+            subsurf=1,
+        )
+        bevelled_box(
+            f"V11_{side}_ShinOuter",
+            (sign * 0.90, -0.10, 1.34),
+            (0.50, 0.48, 0.78),
+            white,
+            rotation=(math.radians(-6), math.radians(sign * 4), math.radians(sign * -2)),
+            bevel=0.04,
+            bevel_segments=3,
+            subsurf=1,
+        )
+        bevelled_box(
+            f"V11_{side}_CalfBack",
+            (sign * 0.90, 0.28, 1.28),
+            (0.30, 0.22, 0.60),
+            dark,
+            rotation=(math.radians(8), 0.0, 0.0),
+            bevel=0.03,
+            bevel_segments=2,
+            subsurf=1,
+        )
+        bevelled_box(
+            f"V11_{side}_FootMain",
+            (sign * 0.90, 0.04, 0.00),
+            (0.64, 0.94, 0.22),
+            dark,
+            rotation=(math.radians(4), 0.0, 0.0),
+            bevel=0.04,
+            bevel_segments=3,
+            subsurf=1,
+        )
+        bevelled_box(
+            f"V11_{side}_ToeShell",
+            (sign * 0.90, -0.78, 0.10),
+            (0.56, 0.24, 0.14),
+            white,
+            rotation=(math.radians(-14), 0.0, 0.0),
+            bevel=0.02,
+            bevel_segments=2,
+            subsurf=1,
+        )
+        bevelled_box(
+            f"V11_{side}_HeelShell",
+            (sign * 0.90, 0.72, 0.04),
+            (0.24, 0.20, 0.14),
+            white,
+            rotation=(math.radians(10), 0.0, 0.0),
+            bevel=0.02,
+            bevel_segments=2,
+            subsurf=1,
+        )
+
+    # Make head/neck transition cleaner.
+    bevelled_box(
+        "V11_NeckCollar",
+        (0.0, -0.56, 8.62),
+        (1.02, 0.22, 0.16),
+        white,
+        rotation=(math.radians(-6), 0.0, 0.0),
+        bevel=0.02,
+        bevel_segments=2,
+        subsurf=1,
+    )
+    bevelled_box(
+        "V11_ChestCenterStripe",
+        (0.0, -1.02, 6.22),
+        (0.12, 0.02, 0.56),
+        dark,
+        bevel=0.008,
+    )
+    for side in (-1, 1):
+        bevelled_box(
+            f"V11_ChestRedTick_{side}",
+            (side * 0.42, -1.00, 5.30),
+            (0.06, 0.014, 0.08),
+            red,
+            rotation=(0.0, 0.0, math.radians(side * 18)),
+            bevel=0.006,
+        )
+
+
 def add_stage(materials: dict[str, bpy.types.Material]) -> None:
     floor = materials["floor"]
     ring = materials["ring"]
@@ -1486,7 +1741,7 @@ def write_info(output_dir: Path, args: argparse.Namespace) -> None:
     vertex_count = sum(len(obj.data.vertices) for obj in mesh_objects)
     polygon_count = sum(len(obj.data.polygons) for obj in mesh_objects)
     info = (
-        "Reference-Inspired Hero Chibi Mech V10\n"
+        "Silhouette-Priority Hero Chibi Mech V11\n"
         f"Blender: {bpy.app.version_string}\n"
         f"Resolution: {args.resolution} x {args.resolution}\n"
         f"Requested samples: {args.samples}\n"
@@ -1582,6 +1837,7 @@ def main() -> None:
     add_leg("R", 1, materials)
     add_reference_v3_details(materials)
     add_reference_v10_refinements(materials)
+    add_v11_silhouette_overrides(materials)
     add_micro_details(materials)
     add_logo_decal(materials)
     add_stage(materials)
