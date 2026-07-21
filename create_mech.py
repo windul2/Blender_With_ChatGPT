@@ -519,7 +519,10 @@ def configure_render(args: argparse.Namespace, output_dir: Path) -> None:
         background.inputs["Color"].default_value = (0.008, 0.012, 0.025, 1.0)
         background.inputs["Strength"].default_value = 0.18
 
-    scene.view_settings.look = "AgX - Medium High Contrast"
+    try:
+        scene.view_settings.look = "AgX - Medium High Contrast"
+    except (TypeError, ValueError):
+        print("AgX look preset is unavailable; using Blender default look.")
 
 
 def export_assets(output_dir: Path) -> None:
@@ -564,6 +567,7 @@ def write_info(output_dir: Path, args: argparse.Namespace) -> None:
 
 
 def main() -> None:
+    EXPORT_OBJECTS.clear()
     args = parse_args()
     output_dir = Path(args.output_dir).expanduser().resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
