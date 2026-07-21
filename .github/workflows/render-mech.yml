@@ -1,4 +1,4 @@
-name: Build Render and Score Hero Chibi Mech V10
+name: Build Render and Score Hero Chibi Mech V11
 
 on:
   workflow_dispatch:
@@ -33,7 +33,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: mech-render-score-${{ github.ref }}
+  group: mech-render-score-v11-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -149,7 +149,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mech-render-score-${{ github.run_number }}
+          name: mech-render-score-v11-${{ github.run_number }}
           path: |
             output/
             report/
