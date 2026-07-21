@@ -1,4 +1,4 @@
-"""Create a rebuild-style V12 stylized chibi mech, render it, and export assets.
+"""Create a clean-render V13 stylized chibi mech, render it, and export assets.
 
 Run inside Blender:
     blender --background --factory-startup --python create_mech.py -- \
@@ -1947,6 +1947,75 @@ def add_v12_body_rebuild(materials: dict[str, bpy.types.Material]) -> None:
         )
 
 
+
+def add_v13_head_refinement(materials: dict[str, bpy.types.Material]) -> None:
+    """Clean up the head silhouette with a smoother outer shell and simpler face framing."""
+    white = materials["white"]
+    dark = materials["dark"]
+    gray = materials["gray"]
+
+    bevelled_box(
+        "V13_HeadCrownShell",
+        (0.0, 0.12, 10.92),
+        (2.26, 1.86, 1.72),
+        white,
+        rotation=(math.radians(6), 0.0, 0.0),
+        bevel=0.12,
+        bevel_segments=4,
+        subsurf=2,
+    )
+    bevelled_box(
+        "V13_HeadCheekWrap",
+        (0.0, -0.90, 10.00),
+        (1.62, 0.72, 0.88),
+        white,
+        rotation=(math.radians(12), 0.0, 0.0),
+        bevel=0.06,
+        bevel_segments=3,
+        subsurf=1,
+    )
+    bevelled_box(
+        "V13_VisorFrame",
+        (0.0, -1.18, 10.04),
+        (1.44, 0.12, 0.58),
+        dark,
+        rotation=(math.radians(-14), 0.0, 0.0),
+        bevel=0.03,
+        bevel_segments=2,
+        subsurf=1,
+    )
+    bevelled_box(
+        "V13_JawShell",
+        (0.0, -0.84, 8.98),
+        (1.16, 0.34, 0.22),
+        white,
+        rotation=(math.radians(-4), 0.0, 0.0),
+        bevel=0.03,
+        bevel_segments=2,
+        subsurf=1,
+    )
+    for side in (-1, 1):
+        bevelled_box(
+            f"V13_SideHelmetPanel_{side}",
+            (side * 2.20, 0.18, 10.66),
+            (0.48, 0.82, 0.92),
+            white,
+            rotation=(math.radians(-4), math.radians(side * 10), math.radians(side * -10)),
+            bevel=0.04,
+            bevel_segments=3,
+            subsurf=1,
+        )
+        cylinder(
+            f"V13_SideDisc_{side}",
+            (side * 2.18, 0.80, 9.12),
+            0.30,
+            0.16,
+            gray,
+            rotation=(0.0, math.radians(90), 0.0),
+            vertices=24,
+            bevel=0.02,
+        )
+
 def add_stage(materials: dict[str, bpy.types.Material]) -> None:
     floor = materials["floor"]
     ring = materials["ring"]
@@ -2008,7 +2077,7 @@ def configure_render(args: argparse.Namespace, output_dir: Path) -> None:
     scene.render.image_settings.file_format = "PNG"
     scene.render.image_settings.color_mode = "RGBA"
     scene.render.image_settings.color_depth = "8"
-    scene.render.film_transparent = False
+    scene.render.film_transparent = True
     scene.render.filepath = str(output_dir / "mech_render.png")
 
     world = scene.world
@@ -2016,7 +2085,7 @@ def configure_render(args: argparse.Namespace, output_dir: Path) -> None:
     bg = world.node_tree.nodes.get("Background")
     if bg is not None:
         bg.inputs["Color"].default_value = (0.92, 0.94, 0.98, 1.0)
-        bg.inputs["Strength"].default_value = 0.92
+        bg.inputs["Strength"].default_value = 0.0
 
     try:
         scene.view_settings.look = "AgX - Medium High Contrast"
@@ -2057,7 +2126,7 @@ def write_info(output_dir: Path, args: argparse.Namespace) -> None:
     vertex_count = sum(len(obj.data.vertices) for obj in mesh_objects)
     polygon_count = sum(len(obj.data.polygons) for obj in mesh_objects)
     info = (
-        "Rebuild-Style Hero Chibi Mech V12\n"
+        "Clean-Render Hero Chibi Mech V13\n"
         f"Blender: {bpy.app.version_string}\n"
         f"Resolution: {args.resolution} x {args.resolution}\n"
         f"Requested samples: {args.samples}\n"
@@ -2147,10 +2216,10 @@ def main() -> None:
 
     add_head(materials)
     add_reference_v3_details(materials)
+    add_v13_head_refinement(materials)
     add_v12_body_rebuild(materials)
     add_logo_decal(materials)
     add_micro_details(materials)
-    add_stage(materials)
     configure_camera_and_lights()
     configure_render(args, output_dir)
 
