@@ -1,4 +1,4 @@
-name: Build Render and Score Hero Chibi Mech V12
+name: Build Render and Score Hero Chibi Mech V13
 
 on:
   workflow_dispatch:
@@ -33,7 +33,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: mech-render-score-v12-${{ github.ref }}
+  group: mech-render-score-v13-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -44,7 +44,7 @@ env:
 
 jobs:
   model-render-score:
-    name: Render V12 mech and compute similarity score
+    name: Render V13 mech and compute similarity score
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -60,6 +60,7 @@ jobs:
           test -f scripts/measure_similarity.py || { echo "::error::scripts/measure_similarity.py missing"; exit 1; }
           test -f reference/reference.jpg || { echo "::error::reference/reference.jpg missing"; exit 1; }
           python3 -m py_compile create_mech.py
+          python3 -m py_compile scripts/measure_similarity.py
 
       - name: Install Python deps for scoring
         shell: bash
@@ -144,13 +145,15 @@ jobs:
           print('|---|---:|')
           for k, v in data['scores'].items():
               print(f'| {k} | {v:.4f} |')
+          print('')
+          print(f"Alpha mask used: {data.get('render_uses_alpha_mask')}")
           PY
 
       - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mech-render-score-v12-${{ github.run_number }}
+          name: mech-render-score-v13-${{ github.run_number }}
           path: |
             output/
             report/
