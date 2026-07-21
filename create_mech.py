@@ -1,4 +1,4 @@
-"""Create a silhouette-priority V11 stylized chibi mech, render it, and export assets.
+"""Create a rebuild-style V12 stylized chibi mech, render it, and export assets.
 
 Run inside Blender:
     blender --background --factory-startup --python create_mech.py -- \
@@ -1631,6 +1631,322 @@ def add_v11_silhouette_overrides(materials: dict[str, bpy.types.Material]) -> No
         )
 
 
+
+def add_v12_body_rebuild(materials: dict[str, bpy.types.Material]) -> None:
+    """Rebuild torso, limbs and silhouette from scratch instead of layering more blocks."""
+    white = materials["white"]
+    dark = materials["dark"]
+    gray = materials["gray"]
+    blue = materials["blue"]
+    red = materials["red"]
+
+    # Neck and torso core: smaller and more organic than V10/V11.
+    cylinder("V12_NeckCore", (0.0, -0.04, 8.24), 0.34, 0.44, dark, vertices=24, bevel=0.03)
+    sphere("V12_UpperTorsoOrb", (0.0, -0.02, 6.88), (1.22, 0.90, 1.16), dark, segments=34, rings=20)
+    bevelled_box(
+        "V12_ChestShell",
+        (0.0, -0.34, 7.02),
+        (1.60, 0.58, 1.02),
+        white,
+        rotation=(math.radians(10), 0.0, 0.0),
+        bevel=0.05,
+        bevel_segments=3,
+        subsurf=2,
+    )
+    bevelled_box(
+        "V12_ChestFrame",
+        (0.0, -0.70, 6.28),
+        (1.02, 0.28, 0.60),
+        dark,
+        rotation=(math.radians(-8), 0.0, 0.0),
+        bevel=0.04,
+        bevel_segments=3,
+        subsurf=1,
+    )
+    bevelled_box(
+        "V12_CenterBreastplate",
+        (0.0, -1.00, 6.54),
+        (0.32, 0.06, 0.36),
+        blue,
+        rotation=(math.radians(-8), 0.0, 0.0),
+        bevel=0.02,
+    )
+    bevelled_box(
+        "V12_AbdomenCore",
+        (0.0, -0.34, 5.72),
+        (0.86, 0.36, 0.52),
+        dark,
+        rotation=(math.radians(-8), 0.0, 0.0),
+        bevel=0.04,
+        bevel_segments=3,
+        subsurf=1,
+    )
+    sphere("V12_PelvisBall", (0.0, -0.04, 4.64), (1.00, 0.82, 0.70), white, segments=30, rings=18)
+    bevelled_box(
+        "V12_PelvisFront",
+        (0.0, -0.86, 4.68),
+        (0.84, 0.14, 0.40),
+        white,
+        rotation=(math.radians(-10), 0.0, 0.0),
+        bevel=0.03,
+        bevel_segments=2,
+        subsurf=1,
+    )
+    for side in (-1, 1):
+        sphere(
+            f"V12_RibPod_{side}",
+            (side * 1.10, -0.18, 6.70),
+            (0.34, 0.30, 0.52),
+            white,
+            segments=28,
+            rings=16,
+        )
+        cylinder(
+            f"V12_HipJoint_{side}",
+            (side * 0.90, -0.04, 4.18),
+            0.22,
+            0.22,
+            gray,
+            rotation=(0.0, math.radians(90), 0.0),
+            vertices=20,
+            bevel=0.02,
+        )
+
+    # Compact backpack blocks.
+    bevelled_box(
+        "V12_BackpackCore",
+        (0.0, 1.04, 6.92),
+        (1.10, 0.34, 0.94),
+        dark,
+        bevel=0.04,
+        bevel_segments=3,
+        subsurf=1,
+    )
+    for side in (-1, 1):
+        bevelled_box(
+            f"V12_BackpackBox_{side}",
+            (side * 1.52, 1.00, 6.98),
+            (0.60, 0.46, 0.64),
+            white,
+            rotation=(0.0, math.radians(side * 4), math.radians(side * 4)),
+            bevel=0.03,
+            bevel_segments=2,
+            subsurf=1,
+        )
+        cylinder(
+            f"V12_BackpackWheel_{side}",
+            (side * 1.62, 0.88, 5.86),
+            0.26,
+            0.18,
+            gray,
+            rotation=(0.0, math.radians(90), 0.0),
+            vertices=24,
+            bevel=0.02,
+        )
+        cylinder(
+            f"V12_BackpackGlow_{side}",
+            (side * 1.68, 0.88, 5.86),
+            0.10,
+            0.06,
+            blue,
+            rotation=(0.0, math.radians(90), 0.0),
+            vertices=18,
+            bevel=0.01,
+        )
+
+    # Arms rebuilt from shells and rounded joints.
+    for side, sign in (("L", -1), ("R", 1)):
+        sphere(
+            f"V12_{side}_ShoulderBall",
+            (sign * 2.06, -0.02, 7.10),
+            (0.58, 0.54, 0.54),
+            gray,
+            segments=30,
+            rings=18,
+        )
+        bevelled_box(
+            f"V12_{side}_ShoulderShell",
+            (sign * 2.30, -0.10, 7.14),
+            (0.74, 0.72, 0.68),
+            white,
+            rotation=(math.radians(4), math.radians(sign * -10), math.radians(sign * -12)),
+            bevel=0.04,
+            bevel_segments=3,
+            subsurf=1,
+        )
+        capsule(
+            f"V12_{side}_UpperArm",
+            (sign * 2.34, -0.02, 5.96),
+            0.26,
+            0.56,
+            dark,
+            rotation=(0.0, 0.0, math.radians(sign * -8)),
+        )
+        sphere(
+            f"V12_{side}_ElbowBall",
+            (sign * 2.44, -0.02, 5.02),
+            (0.24, 0.24, 0.24),
+            gray,
+            segments=24,
+            rings=14,
+        )
+        bevelled_box(
+            f"V12_{side}_ForearmShell",
+            (sign * 2.58, -0.06, 4.08),
+            (0.52, 0.52, 0.72),
+            white,
+            rotation=(math.radians(-6), 0.0, math.radians(sign * -6)),
+            bevel=0.04,
+            bevel_segments=3,
+            subsurf=1,
+        )
+        bevelled_box(
+            f"V12_{side}_ForearmInset",
+            (sign * 2.72, -0.54, 4.06),
+            (0.18, 0.04, 0.38),
+            dark,
+            rotation=(math.radians(-8), 0.0, math.radians(sign * -6)),
+            bevel=0.01,
+        )
+        sphere(
+            f"V12_{side}_WristBall",
+            (sign * 2.80, -0.02, 3.28),
+            (0.18, 0.18, 0.18),
+            gray,
+            segments=22,
+            rings=12,
+        )
+        bevelled_box(
+            f"V12_{side}_Fist",
+            (sign * 2.96, -0.02, 2.94),
+            (0.54, 0.56, 0.38),
+            white,
+            rotation=(math.radians(4), 0.0, math.radians(sign * -8)),
+            bevel=0.04,
+            bevel_segments=3,
+            subsurf=1,
+        )
+        bevelled_box(
+            f"V12_{side}_Thumb",
+            (sign * 3.22, -0.12, 2.92),
+            (0.10, 0.12, 0.20),
+            white,
+            rotation=(math.radians(20), math.radians(sign * 12), math.radians(sign * -22)),
+            bevel=0.02,
+            subsurf=1,
+        )
+        for idx, dz in enumerate((-0.12, 0.04, 0.20)):
+            bevelled_box(
+                f"V12_{side}_Finger_{idx}",
+                (sign * 2.98, -0.42, 2.70 + dz),
+                (0.08, 0.10, 0.18),
+                dark,
+                rotation=(math.radians(-16), 0.0, math.radians(sign * -6)),
+                bevel=0.012,
+            )
+
+    # Legs rebuilt with rounder masses and shorter feet.
+    for side, sign in (("L", -1), ("R", 1)):
+        capsule(
+            f"V12_{side}_Thigh",
+            (sign * 0.88, -0.02, 3.16),
+            0.30,
+            0.74,
+            dark,
+            rotation=(0.0, 0.0, math.radians(sign * -2)),
+        )
+        bevelled_box(
+            f"V12_{side}_ThighShell",
+            (sign * 0.88, -0.36, 3.08),
+            (0.42, 0.16, 0.64),
+            white,
+            rotation=(math.radians(-4), 0.0, math.radians(sign * -4)),
+            bevel=0.03,
+            subsurf=1,
+        )
+        sphere(
+            f"V12_{side}_KneeBall",
+            (sign * 0.88, -0.02, 2.24),
+            (0.24, 0.24, 0.24),
+            gray,
+            segments=22,
+            rings=12,
+        )
+        bevelled_box(
+            f"V12_{side}_KneeShell",
+            (sign * 0.88, -0.34, 2.22),
+            (0.28, 0.14, 0.22),
+            white,
+            rotation=(math.radians(10), 0.0, math.radians(sign * -4)),
+            bevel=0.02,
+            subsurf=1,
+        )
+        capsule(
+            f"V12_{side}_Shin",
+            (sign * 0.88, 0.00, 1.26),
+            0.32,
+            0.84,
+            dark,
+            rotation=(0.0, 0.0, math.radians(sign * -2)),
+        )
+        bevelled_box(
+            f"V12_{side}_ShinShell",
+            (sign * 0.88, -0.32, 1.26),
+            (0.44, 0.18, 0.66),
+            white,
+            rotation=(math.radians(-6), 0.0, math.radians(sign * -2)),
+            bevel=0.03,
+            subsurf=1,
+        )
+        sphere(
+            f"V12_{side}_AnkleBall",
+            (sign * 0.88, 0.02, 0.36),
+            (0.18, 0.18, 0.18),
+            gray,
+            segments=22,
+            rings=12,
+        )
+        bevelled_box(
+            f"V12_{side}_FootBase",
+            (sign * 0.88, 0.10, 0.00),
+            (0.58, 0.84, 0.20),
+            dark,
+            rotation=(math.radians(4), 0.0, 0.0),
+            bevel=0.03,
+            subsurf=1,
+        )
+        bevelled_box(
+            f"V12_{side}_FootShell",
+            (sign * 0.88, -0.68, 0.10),
+            (0.50, 0.20, 0.12),
+            white,
+            rotation=(math.radians(-12), 0.0, 0.0),
+            bevel=0.02,
+            subsurf=1,
+        )
+        bevelled_box(
+            f"V12_{side}_HeelShell",
+            (sign * 0.88, 0.66, 0.02),
+            (0.22, 0.18, 0.10),
+            white,
+            rotation=(math.radians(8), 0.0, 0.0),
+            bevel=0.02,
+            subsurf=1,
+        )
+
+    # Simple chest decals.
+    bevelled_box("V12_ChestStripe", (0.0, -0.98, 5.96), (0.12, 0.015, 0.48), dark, bevel=0.006)
+    for side in (-1, 1):
+        bevelled_box(
+            f"V12_ChestTick_{side}",
+            (side * 0.34, -0.98, 5.28),
+            (0.05, 0.012, 0.08),
+            red,
+            rotation=(0.0, 0.0, math.radians(side * 16)),
+            bevel=0.006,
+        )
+
+
 def add_stage(materials: dict[str, bpy.types.Material]) -> None:
     floor = materials["floor"]
     ring = materials["ring"]
@@ -1741,7 +2057,7 @@ def write_info(output_dir: Path, args: argparse.Namespace) -> None:
     vertex_count = sum(len(obj.data.vertices) for obj in mesh_objects)
     polygon_count = sum(len(obj.data.polygons) for obj in mesh_objects)
     info = (
-        "Silhouette-Priority Hero Chibi Mech V11\n"
+        "Rebuild-Style Hero Chibi Mech V12\n"
         f"Blender: {bpy.app.version_string}\n"
         f"Resolution: {args.resolution} x {args.resolution}\n"
         f"Requested samples: {args.samples}\n"
@@ -1830,16 +2146,10 @@ def main() -> None:
     }
 
     add_head(materials)
-    add_torso(materials)
-    add_arm("L", -1, materials)
-    add_arm("R", 1, materials)
-    add_leg("L", -1, materials)
-    add_leg("R", 1, materials)
     add_reference_v3_details(materials)
-    add_reference_v10_refinements(materials)
-    add_v11_silhouette_overrides(materials)
-    add_micro_details(materials)
+    add_v12_body_rebuild(materials)
     add_logo_decal(materials)
+    add_micro_details(materials)
     add_stage(materials)
     configure_camera_and_lights()
     configure_render(args, output_dir)
