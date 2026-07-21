@@ -1,8 +1,8 @@
-"""Create a reference-inspired V3 stylized chibi mech, render it, and export assets.
+"""Create a reference-inspired V10 stylized chibi mech, render it, and export assets.
 
 Run inside Blender:
     blender --background --factory-startup --python create_mech.py -- \
-      --output-dir output --resolution 1024 --samples 160
+      --output-dir output --resolution 1024 --samples 192
 """
 
 from __future__ import annotations
@@ -26,11 +26,11 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output-dir", default="output")
     parser.add_argument("--resolution", type=int, default=1024)
-    parser.add_argument("--samples", type=int, default=160)
+    parser.add_argument("--samples", type=int, default=192)
     args = parser.parse_args(script_args)
 
     args.resolution = max(512, min(args.resolution, 2160))
-    args.samples = max(32, min(args.samples, 384))
+    args.samples = max(32, min(args.samples, 512))
     return args
 
 
@@ -325,11 +325,11 @@ def add_head(materials: dict[str, bpy.types.Material]) -> None:
     blue = materials["blue"]
     red = materials["red"]
 
-    sphere("HeadCore", (0.0, 0.10, 10.06), (1.86, 1.58, 1.98), dark, segments=36, rings=20)
+    sphere("HeadCore", (0.0, 0.10, 10.10), (1.96, 1.66, 2.06), dark, segments=36, rings=20)
     bevelled_box(
         "HelmetMain",
-        (0.0, -0.14, 10.54),
-        (2.18, 1.62, 1.66),
+        (0.0, -0.12, 10.60),
+        (2.26, 1.68, 1.72),
         white,
         rotation=(math.radians(8), 0.0, 0.0),
         bevel=0.18,
@@ -355,8 +355,8 @@ def add_head(materials: dict[str, bpy.types.Material]) -> None:
     )
     bevelled_box(
         "VisorShell",
-        (0.0, -1.12, 10.12),
-        (1.40, 0.46, 0.78),
+        (0.0, -1.14, 10.16),
+        (1.48, 0.50, 0.82),
         dark,
         rotation=(math.radians(-12), 0.0, 0.0),
         bevel=0.10,
@@ -364,8 +364,8 @@ def add_head(materials: dict[str, bpy.types.Material]) -> None:
     )
     bevelled_box(
         "VisorGlass",
-        (0.0, -1.37, 10.08),
-        (1.12, 0.18, 0.44),
+        (0.0, -1.39, 10.10),
+        (1.18, 0.20, 0.46),
         visor,
         rotation=(math.radians(-14), 0.0, 0.0),
         bevel=0.04,
@@ -476,8 +476,8 @@ def add_torso(materials: dict[str, bpy.types.Material]) -> None:
     )
     bevelled_box(
         "ChestShell",
-        (0.0, -0.34, 7.06),
-        (1.86, 0.76, 1.26),
+        (0.0, -0.32, 7.08),
+        (1.94, 0.80, 1.30),
         white,
         rotation=(math.radians(8), 0.0, 0.0),
         bevel=0.10,
@@ -529,8 +529,8 @@ def add_torso(materials: dict[str, bpy.types.Material]) -> None:
     )
     bevelled_box(
         "PelvisMain",
-        (0.0, -0.10, 4.74),
-        (1.40, 0.96, 0.82),
+        (0.0, -0.08, 4.74),
+        (1.46, 0.98, 0.84),
         white,
         bevel=0.10,
         bevel_segments=4,
@@ -814,7 +814,7 @@ def add_leg(side: str, sign: int, materials: dict[str, bpy.types.Material]) -> N
     bevelled_box(
         f"{side}_FootBase",
         (hip_x, 0.06, -0.04),
-        (0.60, 0.90, 0.22),
+        (0.64, 0.96, 0.24),
         dark,
         rotation=(math.radians(4), 0.0, 0.0),
         bevel=0.05,
@@ -1139,7 +1139,7 @@ def add_reference_v3_details(materials: dict[str, bpy.types.Material]) -> None:
         bevelled_box(
             f"{side}_FistCoverV3",
             (sign * 2.92, -0.04, 2.96),
-            (0.50, 0.52, 0.34),
+            (0.56, 0.58, 0.38),
             white,
             rotation=(math.radians(4), 0.0, math.radians(sign * -4)),
             bevel=0.04,
@@ -1158,6 +1158,222 @@ def add_reference_v3_details(materials: dict[str, bpy.types.Material]) -> None:
             bevel=0.04,
             bevel_segments=3,
             subsurf=1,
+        )
+
+
+def add_reference_v10_refinements(materials: dict[str, bpy.types.Material]) -> None:
+    """Tenth-pass refinements to reduce the gap with the reference silhouette."""
+    white = materials["white"]
+    dark = materials["dark"]
+    gray = materials["gray"]
+    blue = materials["blue"]
+    red = materials["red"]
+
+    # Crown / brow / visor layering.
+    bevelled_box(
+        "HelmetCrownPlateV10",
+        (0.0, 0.48, 12.10),
+        (1.92, 0.94, 0.26),
+        white,
+        rotation=(math.radians(-8), 0.0, 0.0),
+        bevel=0.04,
+        bevel_segments=3,
+        subsurf=1,
+    )
+    bevelled_box(
+        "HelmetBrowArcV10",
+        (0.0, -1.52, 10.98),
+        (2.04, 0.09, 0.14),
+        dark,
+        rotation=(math.radians(-8), 0.0, 0.0),
+        bevel=0.02,
+    )
+    bevelled_box(
+        "HelmetBridgeV10",
+        (0.0, -0.80, 10.46),
+        (0.92, 0.12, 0.22),
+        gray,
+        rotation=(math.radians(-10), 0.0, 0.0),
+        bevel=0.02,
+        subsurf=1,
+    )
+    for side in (-1, 1):
+        bevelled_box(
+            f"VisorCornerFrameV10_{side}",
+            (side * 1.10, -1.28, 10.18),
+            (0.24, 0.10, 0.26),
+            dark,
+            rotation=(math.radians(-12), 0.0, math.radians(side * 22)),
+            bevel=0.02,
+            subsurf=1,
+        )
+        bevelled_box(
+            f"EyeGlowBarV10_{side}",
+            (side * 0.56, -1.30, 9.78),
+            (0.18, 0.04, 0.16),
+            blue,
+            rotation=(math.radians(-14), 0.0, math.radians(side * -8)),
+            bevel=0.01,
+        )
+
+    # Side / rear helmet mechanical silhouette.
+    for side in (-1, 1):
+        bevelled_box(
+            f"RearShoulderHelmetBoxV10_{side}",
+            (side * 2.58, 0.88, 10.12),
+            (0.94, 0.56, 0.92),
+            white,
+            rotation=(0.0, math.radians(side * 6), math.radians(side * 5)),
+            bevel=0.04,
+            bevel_segments=3,
+            subsurf=1,
+        )
+        cylinder(
+            f"RearHelmetWheelV10_{side}",
+            (side * 2.24, 0.76, 9.18),
+            0.38,
+            0.18,
+            gray,
+            rotation=(0.0, math.radians(90), 0.0),
+            vertices=30,
+            bevel=0.02,
+        )
+        cylinder(
+            f"RearHelmetWheelGlowV10_{side}",
+            (side * 2.32, 0.76, 9.18),
+            0.16,
+            0.08,
+            blue,
+            rotation=(0.0, math.radians(90), 0.0),
+            vertices=22,
+            bevel=0.01,
+        )
+        bevelled_box(
+            f"HelmetHingeV10_{side}",
+            (side * 1.06, 1.22, 11.98),
+            (0.18, 0.28, 0.54),
+            gray,
+            rotation=(math.radians(-28), math.radians(side * 10), 0.0),
+            bevel=0.02,
+            subsurf=1,
+        )
+        bevelled_box(
+            f"HelmetJawWingV10_{side}",
+            (side * 1.62, -1.06, 9.78),
+            (0.36, 0.22, 0.52),
+            white,
+            rotation=(math.radians(20), math.radians(side * 18), math.radians(side * 18)),
+            bevel=0.03,
+            subsurf=1,
+        )
+
+    # Neck / chest interface.
+    bevelled_box(
+        "NeckGuardV10",
+        (0.0, -0.68, 8.72),
+        (1.10, 0.22, 0.18),
+        white,
+        rotation=(math.radians(-4), 0.0, 0.0),
+        bevel=0.02,
+        subsurf=1,
+    )
+    bevelled_box(
+        "ChestBadgeBlockV10",
+        (0.0, -0.98, 6.10),
+        (0.18, 0.02, 0.12),
+        dark,
+        bevel=0.006,
+    )
+
+    # Shoulder / arm silhouette closer to the reference.
+    for side, sign in (("L", -1), ("R", 1)):
+        bevelled_box(
+            f"{side}_ShoulderOuterShellV10",
+            (sign * 2.42, -0.08, 7.28),
+            (0.88, 0.86, 0.82),
+            white,
+            rotation=(math.radians(2), math.radians(sign * -10), math.radians(sign * -12)),
+            bevel=0.04,
+            bevel_segments=3,
+            subsurf=1,
+        )
+        bevelled_box(
+            f"{side}_ForearmFrontPlateV10",
+            (sign * 2.56, -0.62, 4.18),
+            (0.20, 0.04, 0.40),
+            dark,
+            rotation=(math.radians(-8), 0.0, math.radians(sign * -6)),
+            bevel=0.01,
+        )
+        bevelled_box(
+            f"{side}_FistTopArmorV10",
+            (sign * 2.92, -0.36, 3.02),
+            (0.30, 0.14, 0.18),
+            white,
+            rotation=(math.radians(4), 0.0, math.radians(sign * -6)),
+            bevel=0.02,
+            subsurf=1,
+        )
+
+    # Hip / knee / foot shape closer to the reference.
+    for side, sign in (("L", -1), ("R", 1)):
+        cylinder(
+            f"{side}_HipDiscV10",
+            (sign * 1.38, -0.06, 4.38),
+            0.28,
+            0.14,
+            gray,
+            rotation=(0.0, math.radians(90), 0.0),
+            vertices=24,
+            bevel=0.02,
+        )
+        bevelled_box(
+            f"{side}_KneeShellV10",
+            (sign * 0.92, -0.44, 2.34),
+            (0.28, 0.14, 0.24),
+            white,
+            rotation=(math.radians(12), 0.0, math.radians(sign * -4)),
+            bevel=0.02,
+            subsurf=1,
+        )
+        bevelled_box(
+            f"{side}_ToeShellV10",
+            (sign * 0.92, -0.94, 0.10),
+            (0.34, 0.14, 0.10),
+            white,
+            rotation=(math.radians(-14), 0.0, 0.0),
+            bevel=0.02,
+        )
+        bevelled_box(
+            f"{side}_HeelPadV10",
+            (sign * 0.92, 0.96, -0.02),
+            (0.20, 0.14, 0.08),
+            dark,
+            rotation=(math.radians(8), 0.0, 0.0),
+            bevel=0.015,
+        )
+
+    # Backpack blocks.
+    for side in (-1, 1):
+        bevelled_box(
+            f"BackpackSideBoxV10_{side}",
+            (side * 1.92, 1.10, 7.06),
+            (0.72, 0.52, 0.74),
+            white,
+            rotation=(0.0, math.radians(side * 4), math.radians(side * 4)),
+            bevel=0.03,
+            bevel_segments=3,
+            subsurf=1,
+        )
+        cylinder(
+            f"BackpackDiscV10_{side}",
+            (side * 1.32, 1.18, 6.24),
+            0.18,
+            0.12,
+            blue,
+            rotation=(math.radians(90), 0.0, 0.0),
+            vertices=18,
+            bevel=0.01,
         )
 
 def add_stage(materials: dict[str, bpy.types.Material]) -> None:
@@ -1229,7 +1445,7 @@ def configure_render(args: argparse.Namespace, output_dir: Path) -> None:
     bg = world.node_tree.nodes.get("Background")
     if bg is not None:
         bg.inputs["Color"].default_value = (0.92, 0.94, 0.98, 1.0)
-        bg.inputs["Strength"].default_value = 0.88
+        bg.inputs["Strength"].default_value = 0.92
 
     try:
         scene.view_settings.look = "AgX - Medium High Contrast"
@@ -1270,7 +1486,7 @@ def write_info(output_dir: Path, args: argparse.Namespace) -> None:
     vertex_count = sum(len(obj.data.vertices) for obj in mesh_objects)
     polygon_count = sum(len(obj.data.polygons) for obj in mesh_objects)
     info = (
-        "Reference-Inspired Hero Chibi Mech V3\n"
+        "Reference-Inspired Hero Chibi Mech V10\n"
         f"Blender: {bpy.app.version_string}\n"
         f"Resolution: {args.resolution} x {args.resolution}\n"
         f"Requested samples: {args.samples}\n"
@@ -1365,6 +1581,7 @@ def main() -> None:
     add_leg("L", -1, materials)
     add_leg("R", 1, materials)
     add_reference_v3_details(materials)
+    add_reference_v10_refinements(materials)
     add_micro_details(materials)
     add_logo_decal(materials)
     add_stage(materials)
