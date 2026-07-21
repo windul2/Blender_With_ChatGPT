@@ -24,8 +24,10 @@ on:
   push:
     branches:
       - main
+      - master
     paths:
       - ".github/workflows/render-mech.yml"
+      - "create_mech.py"
       - "scripts/create_mech.py"
 
 permissions:
@@ -45,11 +47,36 @@ jobs:
   model-and-render:
     name: Create mech and render PNG
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
+
+      - name: Show repository files
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Repository root: $GITHUB_WORKSPACE"
+          find . -maxdepth 4 -type f -print | sort
+
+      - name: Locate Blender Python script
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -f "scripts/create_mech.py" ]]; then
+            SCRIPT_PATH="$GITHUB_WORKSPACE/scripts/create_mech.py"
+          elif [[ -f "create_mech.py" ]]; then
+            SCRIPT_PATH="$GITHUB_WORKSPACE/create_mech.py"
+          else
+            echo "::error::create_mech.py를 찾을 수 없습니다. 저장소 최상위 또는 scripts 폴더에 올려 주세요."
+            exit 1
+          fi
+
+          echo "MECH_SCRIPT=$SCRIPT_PATH" >> "$GITHUB_ENV"
+          echo "Using Blender script: $SCRIPT_PATH"
+          python3 -m py_compile "$SCRIPT_PATH"
 
       - name: Install Blender runtime libraries
         shell: bash
@@ -79,6 +106,7 @@ jobs:
           URL="https://download.blender.org/release/Blender${BLENDER_SERIES}/${ARCHIVE}"
           INSTALL_DIR="${RUNNER_TEMP}/blender"
 
+          echo "Downloading: $URL"
           curl --fail --location --retry 3 --retry-delay 5 \
             "$URL" \
             --output "${RUNNER_TEMP}/${ARCHIVE}"
@@ -88,44 +116,61 @@ jobs:
             --strip-components=1 \
             --directory "$INSTALL_DIR"
 
-          echo "$INSTALL_DIR" >> "$GITHUB_PATH"
+          echo "BLENDER_BIN=$INSTALL_DIR/blender" >> "$GITHUB_ENV"
           "$INSTALL_DIR/blender" --version
 
       - name: Generate model and render image
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p output
+          mkdir -p "$GITHUB_WORKSPACE/output"
 
-          blender \
+          echo "Script: $MECH_SCRIPT"
+          echo "Resolution: $RENDER_RESOLUTION"
+          echo "Samples: $RENDER_SAMPLES"
+
+          "$BLENDER_BIN" \
             --background \
             --factory-startup \
-            --python scripts/create_mech.py \
+            --python-exit-code 1 \
+            --python "$MECH_SCRIPT" \
             -- \
             --output-dir "$GITHUB_WORKSPACE/output" \
             --resolution "$RENDER_RESOLUTION" \
-            --samples "$RENDER_SAMPLES"
+            --samples "$RENDER_SAMPLES" \
+            2>&1 | tee "$GITHUB_WORKSPACE/output/blender.log"
 
       - name: Verify generated files
         shell: bash
         run: |
           set -euo pipefail
-          test -s output/mech_render.png
-          test -s output/mid_poly_mech.blend
-          test -s output/mid_poly_mech.glb
-          test -s output/render_info.txt
+
+          REQUIRED_FILES=(
+            "output/mech_render.png"
+            "output/mid_poly_mech.blend"
+            "output/mid_poly_mech.glb"
+            "output/render_info.txt"
+          )
+
+          echo "Generated output:"
+          find output -maxdepth 2 -type f -printf '%p  %s bytes\n' | sort || true
+
+          for generated_file in "${REQUIRED_FILES[@]}"; do
+            if [[ ! -s "$generated_file" ]]; then
+              echo "::error file=$generated_file::필수 결과 파일이 없거나 크기가 0입니다."
+              exit 1
+            fi
+          done
+
           file output/mech_render.png
           ls -lh output
 
       - name: Upload downloadable render and model
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: mid-poly-mech-${{ github.run_number }}
-          path: |
-            output/mech_render.png
-            output/mid_poly_mech.blend
-            output/mid_poly_mech.glb
-            output/render_info.txt
-          if-no-files-found: error
+          path: output/
+          if-no-files-found: warn
           retention-days: 30
           compression-level: 6
