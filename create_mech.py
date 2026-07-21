@@ -2,7 +2,7 @@
 
 Run inside Blender:
     blender --background --factory-startup --python create_mech.py -- \
-      --output-dir output --resolution 1024 --samples 96
+      --output-dir output --resolution 1024 --samples 128
 """
 
 from __future__ import annotations
@@ -26,11 +26,11 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output-dir", default="output")
     parser.add_argument("--resolution", type=int, default=1024)
-    parser.add_argument("--samples", type=int, default=96)
+    parser.add_argument("--samples", type=int, default=128)
     args = parser.parse_args(script_args)
 
     args.resolution = max(512, min(args.resolution, 2160))
-    args.samples = max(16, min(args.samples, 256))
+    args.samples = max(32, min(args.samples, 320))
     return args
 
 
@@ -173,7 +173,7 @@ def cylinder(
     material: bpy.types.Material,
     *,
     rotation: tuple[float, float, float] = (0.0, 0.0, 0.0),
-    vertices: int = 24,
+    vertices: int = 32,
     bevel: float = 0.04,
     export: bool = True,
 ) -> bpy.types.Object:
@@ -200,8 +200,8 @@ def sphere(
     scale: tuple[float, float, float],
     material: bpy.types.Material,
     *,
-    segments: int = 32,
-    rings: int = 18,
+    segments: int = 44,
+    rings: int = 24,
     export: bool = True,
 ) -> bpy.types.Object:
     bpy.ops.mesh.primitive_uv_sphere_add(segments=segments, ring_count=rings, location=location)
@@ -232,7 +232,7 @@ def capsule(
         length,
         material,
         rotation=rotation,
-        vertices=28,
+        vertices=36,
         bevel=min(radius * 0.12, 0.05),
         export=False,
     )
@@ -248,8 +248,8 @@ def capsule(
         (location[0], location[1], location[2] + length / 2.0),
         (radius, radius, radius),
         material,
-        segments=28,
-        rings=14,
+        segments=36,
+        rings=18,
         export=False,
     )
     end_b = sphere(
@@ -257,8 +257,8 @@ def capsule(
         (location[0], location[1], location[2] - length / 2.0),
         (radius, radius, radius),
         material,
-        segments=28,
-        rings=14,
+        segments=36,
+        rings=18,
         export=False,
     )
     parts.extend([end_a, end_b])
@@ -334,7 +334,7 @@ def add_head(materials: dict[str, bpy.types.Material]) -> None:
         rotation=(math.radians(8), 0.0, 0.0),
         bevel=0.18,
         bevel_segments=4,
-        subsurf=1,
+        subsurf=2,
     )
     bevelled_box(
         "HelmetTopPlate",
@@ -343,7 +343,7 @@ def add_head(materials: dict[str, bpy.types.Material]) -> None:
         white,
         rotation=(math.radians(-8), 0.0, 0.0),
         bevel=0.08,
-        subsurf=1,
+        subsurf=2,
     )
     bevelled_box(
         "HelmetForeheadBand",
@@ -360,7 +360,7 @@ def add_head(materials: dict[str, bpy.types.Material]) -> None:
         dark,
         rotation=(math.radians(-12), 0.0, 0.0),
         bevel=0.10,
-        subsurf=1,
+        subsurf=2,
     )
     bevelled_box(
         "VisorGlass",
@@ -436,7 +436,7 @@ def add_head(materials: dict[str, bpy.types.Material]) -> None:
         white,
         rotation=(math.radians(-6), 0.0, 0.0),
         bevel=0.06,
-        subsurf=1,
+        subsurf=2,
     )
     bevelled_box(
         "HelmetMouthGuard",
@@ -472,7 +472,7 @@ def add_torso(materials: dict[str, bpy.types.Material]) -> None:
         dark,
         bevel=0.12,
         bevel_segments=4,
-        subsurf=1,
+        subsurf=2,
     )
     bevelled_box(
         "ChestShell",
@@ -482,7 +482,7 @@ def add_torso(materials: dict[str, bpy.types.Material]) -> None:
         rotation=(math.radians(8), 0.0, 0.0),
         bevel=0.10,
         bevel_segments=4,
-        subsurf=1,
+        subsurf=2,
     )
     bevelled_box(
         "ChestCenterPlate",
@@ -525,7 +525,7 @@ def add_torso(materials: dict[str, bpy.types.Material]) -> None:
         rotation=(math.radians(-6), 0.0, 0.0),
         bevel=0.08,
         bevel_segments=3,
-        subsurf=1,
+        subsurf=2,
     )
     bevelled_box(
         "PelvisMain",
@@ -534,7 +534,7 @@ def add_torso(materials: dict[str, bpy.types.Material]) -> None:
         white,
         bevel=0.10,
         bevel_segments=4,
-        subsurf=1,
+        subsurf=2,
     )
     bevelled_box(
         "PelvisFrontSkirt",
@@ -572,7 +572,7 @@ def add_torso(materials: dict[str, bpy.types.Material]) -> None:
         dark,
         bevel=0.08,
         bevel_segments=3,
-        subsurf=1,
+        subsurf=2,
     )
     for side in (-1, 1):
         bevelled_box(
@@ -859,6 +859,111 @@ def add_logo_decal(materials: dict[str, bpy.types.Material]) -> None:
     )
 
 
+
+def add_micro_details(materials: dict[str, bpy.types.Material]) -> None:
+    white = materials["white"]
+    dark = materials["dark"]
+    gray = materials["gray"]
+    blue = materials["blue"]
+    red = materials["red"]
+
+    # Helmet seam accents and panel details.
+    for side in (-1, 1):
+        for i in range(3):
+            bevelled_box(
+                f"HelmetCheekFin_{side}_{i}",
+                (side * (1.48 + i * 0.14), -0.70 + i * 0.05, 9.62 - i * 0.08),
+                (0.12, 0.03, 0.18),
+                dark,
+                rotation=(math.radians(22), math.radians(side * 18), math.radians(side * 22)),
+                bevel=0.01,
+            )
+        bevelled_box(
+            f"HelmetRedLine_{side}",
+            (side * 1.45, -0.34, 10.02),
+            (0.28, 0.015, 0.04),
+            red,
+            rotation=(math.radians(15), math.radians(side * 18), math.radians(side * 12)),
+            bevel=0.008,
+        )
+        cylinder(
+            f"NeckCollarBolt_{side}",
+            (side * 0.58, -0.82, 8.76),
+            0.07,
+            0.04,
+            gray,
+            rotation=(0.0, math.radians(90), 0.0),
+            vertices=20,
+            bevel=0.01,
+        )
+
+    # Shoulder and torso bolts / trim.
+    for side in (-1, 1):
+        for z in (6.70, 7.16):
+            cylinder(
+                f"ShoulderBolt_{side}_{str(z).replace('.', '_')}",
+                (side * 2.18, -0.68, z),
+                0.06,
+                0.03,
+                gray,
+                rotation=(0.0, math.radians(90), 0.0),
+                vertices=18,
+                bevel=0.01,
+            )
+        bevelled_box(
+            f"HipDisc_{side}",
+            (side * 1.38, -0.78, 4.36),
+            (0.18, 0.05, 0.18),
+            gray,
+            rotation=(0.0, 0.0, math.radians(side * 14)),
+            bevel=0.02,
+            subsurf=1,
+        )
+
+    # Arms and legs panel strips.
+    for side, sign in (("L", -1), ("R", 1)):
+        for i in range(2):
+            bevelled_box(
+                f"{side}_ForearmPanel_{i}",
+                (sign * 2.58, -0.58, 4.22 - i * 0.22),
+                (0.12, 0.018, 0.16),
+                dark,
+                rotation=(math.radians(-6), 0.0, math.radians(sign * -6)),
+                bevel=0.01,
+            )
+            bevelled_box(
+                f"{side}_ShinMarker_{i}",
+                (sign * 0.74, -0.70, 1.44 - i * 0.26),
+                (0.06, 0.016, 0.10),
+                red if i == 0 else dark,
+                rotation=(math.radians(-8), 0.0, 0.0),
+                bevel=0.008,
+            )
+
+    # Small backpack and ankle nozzles.
+    for side in (-1, 1):
+        cylinder(
+            f"BackNozzle_{side}",
+            (side * 1.20, 1.46, 6.94),
+            0.12,
+            0.18,
+            blue,
+            rotation=(math.radians(90), 0.0, 0.0),
+            vertices=20,
+            bevel=0.015,
+        )
+        cylinder(
+            f"AnkleBooster_{side}",
+            (side * 0.68, 0.88, 0.36),
+            0.10,
+            0.18,
+            gray,
+            rotation=(math.radians(90), 0.0, 0.0),
+            vertices=18,
+            bevel=0.012,
+        )
+
+
 def add_stage(materials: dict[str, bpy.types.Material]) -> None:
     floor = materials["floor"]
     ring = materials["ring"]
@@ -969,7 +1074,7 @@ def write_info(output_dir: Path, args: argparse.Namespace) -> None:
     vertex_count = sum(len(obj.data.vertices) for obj in mesh_objects)
     polygon_count = sum(len(obj.data.polygons) for obj in mesh_objects)
     info = (
-        "Stylized Hero Chibi Mech\n"
+        "Stylized Hero Chibi Mech V2\n"
         f"Blender: {bpy.app.version_string}\n"
         f"Resolution: {args.resolution} x {args.resolution}\n"
         f"Requested samples: {args.samples}\n"
@@ -1063,6 +1168,7 @@ def main() -> None:
     add_arm("R", 1, materials)
     add_leg("L", -1, materials)
     add_leg("R", 1, materials)
+    add_micro_details(materials)
     add_logo_decal(materials)
     add_stage(materials)
     configure_camera_and_lights()
