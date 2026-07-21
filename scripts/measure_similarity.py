@@ -11,17 +11,6 @@ from skimage.feature import canny
 from skimage.metrics import structural_similarity as ssim
 
 
-def contain_on_white(img: Image.Image, target_size: tuple[int, int]) -> Image.Image:
-    scale = min(target_size[0] / img.width, target_size[1] / img.height)
-    new_size = (max(1, int(img.width * scale)), max(1, int(img.height * scale)))
-    resized = img.resize(new_size, Image.LANCZOS)
-    canvas = Image.new('RGB', target_size, (255, 255, 255))
-    x = (target_size[0] - new_size[0]) // 2
-    y = (target_size[1] - new_size[1]) // 2
-    canvas.paste(resized, (x, y))
-    return canvas
-
-
 def parse_ignore_rect(value: str) -> tuple[int, int, int, int]:
     parts = [int(v.strip()) for v in value.split(',')]
     if len(parts) != 4:
@@ -29,20 +18,50 @@ def parse_ignore_rect(value: str) -> tuple[int, int, int, int]:
     return tuple(parts)
 
 
-def foreground_mask(arr: np.ndarray, white_threshold: float = 0.97) -> np.ndarray:
-    return np.any(arr < white_threshold, axis=2)
+def contain_image(img: Image.Image, target_size: tuple[int, int], transparent: bool = False) -> Image.Image:
+    scale = min(target_size[0] / img.width, target_size[1] / img.height)
+    new_size = (max(1, int(img.width * scale)), max(1, int(img.height * scale)))
+    resized = img.resize(new_size, Image.LANCZOS)
+    mode = 'RGBA' if transparent else 'RGB'
+    bg = (255, 255, 255, 0) if transparent else (255, 255, 255)
+    canvas = Image.new(mode, target_size, bg)
+    x = (target_size[0] - new_size[0]) // 2
+    y = (target_size[1] - new_size[1]) // 2
+    if transparent and resized.mode == 'RGBA':
+        canvas.alpha_composite(resized, (x, y))
+    else:
+        canvas.paste(resized, (x, y))
+    return canvas
 
 
 def apply_ignore(mask: np.ndarray, rects: list[tuple[int, int, int, int]]) -> np.ndarray:
     mask = mask.copy()
     h, w = mask.shape
     for x1, y1, x2, y2 in rects:
-        x1 = max(0, min(w, x1))
-        x2 = max(0, min(w, x2))
-        y1 = max(0, min(h, y1))
-        y2 = max(0, min(h, y2))
+        x1 = max(0, min(w, x1)); x2 = max(0, min(w, x2))
+        y1 = max(0, min(h, y1)); y2 = max(0, min(h, y2))
         mask[y1:y2, x1:x2] = False
     return mask
+
+
+def mask_from_reference(img: Image.Image, ignore_rects: list[tuple[int, int, int, int]]) -> tuple[np.ndarray, np.ndarray]:
+    rgb = np.asarray(img.convert('RGB')).astype(np.float32) / 255.0
+    fg = np.any(rgb < 0.97, axis=2)
+    fg = apply_ignore(fg, ignore_rects)
+    return rgb, fg
+
+
+def mask_from_render(img: Image.Image) -> tuple[np.ndarray, np.ndarray]:
+    if img.mode != 'RGBA':
+        img = img.convert('RGBA')
+    arr = np.asarray(img).astype(np.float32) / 255.0
+    rgb = arr[:, :, :3]
+    alpha = arr[:, :, 3]
+    if float(alpha.max()) > 0.01:
+        fg = alpha > 0.05
+    else:
+        fg = np.any(rgb < 0.97, axis=2)
+    return rgb, fg
 
 
 def bbox(mask: np.ndarray) -> tuple[int, int, int, int]:
@@ -73,62 +92,63 @@ def hist_similarity(ref: np.ndarray, tst: np.ndarray, ref_fg: np.ndarray, tst_fg
     return float(np.mean(vals))
 
 
-def make_overlay(ref_img: Image.Image, tst_img: Image.Image, rects: list[tuple[int,int,int,int]], out_path: Path) -> None:
-    ref = np.asarray(ref_img).astype(np.float32)
-    tst = np.asarray(tst_img).astype(np.float32)
-    blend = (0.5 * ref + 0.5 * tst).clip(0,255).astype(np.uint8)
-    out = Image.fromarray(blend)
+def overlay_preview(reference_rgb: np.ndarray, render_rgb: np.ndarray, render_fg: np.ndarray, rects: list[tuple[int,int,int,int]], out_path: Path) -> None:
+    blend = (0.55 * reference_rgb + 0.45 * render_rgb).clip(0, 1)
+    out = Image.fromarray((blend * 255).astype(np.uint8), mode='RGB')
     draw = ImageDraw.Draw(out)
-    draw.text((20,20), 'Reference / Render Overlay v2', fill=(30,30,30))
+    draw.text((18, 18), 'Reference / Render Overlay v3', fill=(30, 30, 30))
     for rect in rects:
-        draw.rectangle(rect, outline=(255,0,0), width=2)
+        draw.rectangle(rect, outline=(255, 0, 0), width=2)
+    # render bbox hint
+    ys, xs = np.where(render_fg)
+    if len(xs):
+        draw.rectangle((int(xs.min()), int(ys.min()), int(xs.max()), int(ys.max())), outline=(0, 128, 255), width=2)
     out.save(out_path)
 
 
 def main() -> None:
-    p = argparse.ArgumentParser()
-    p.add_argument('--reference', required=True)
-    p.add_argument('--render', required=True)
-    p.add_argument('--out-json', required=True)
-    p.add_argument('--out-md', required=True)
-    p.add_argument('--out-overlay', required=True)
-    p.add_argument('--ignore-rect', action='append', type=parse_ignore_rect, default=[])
-    args = p.parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--reference', required=True)
+    parser.add_argument('--render', required=True)
+    parser.add_argument('--out-json', required=True)
+    parser.add_argument('--out-md', required=True)
+    parser.add_argument('--out-overlay', required=True)
+    parser.add_argument('--ignore-rect', action='append', type=parse_ignore_rect, default=[])
+    args = parser.parse_args()
 
     ref_img = Image.open(args.reference).convert('RGB')
-    render_img = contain_on_white(Image.open(args.render).convert('RGB'), ref_img.size)
+    raw_render = Image.open(args.render)
+    transparent = raw_render.mode == 'RGBA'
+    render_img = contain_image(raw_render, ref_img.size, transparent=transparent)
 
-    ref = np.asarray(ref_img).astype(np.float32)/255.0
-    tst = np.asarray(render_img).astype(np.float32)/255.0
-
-    ref_fg = apply_ignore(foreground_mask(ref), args.ignore_rect)
-    tst_fg = apply_ignore(foreground_mask(tst), args.ignore_rect)
+    ref_rgb, ref_fg = mask_from_reference(ref_img, args.ignore_rect)
+    tst_rgb, tst_fg = mask_from_render(render_img)
+    tst_fg = apply_ignore(tst_fg, args.ignore_rect)
 
     inter = np.logical_and(ref_fg, tst_fg).sum()
     union = np.logical_or(ref_fg, tst_fg).sum()
-    silhouette_iou = float(inter/union) if union > 0 else 0.0
+    silhouette_iou = float(inter / union) if union > 0 else 0.0
 
     ref_box = bbox(ref_fg)
     tst_box = bbox(tst_fg)
     box_sim = bbox_similarity(ref_box, tst_box, ref_img.width, ref_img.height)
+    hsim = hist_similarity(ref_rgb, tst_rgb, ref_fg, tst_fg)
 
-    hsim = hist_similarity(ref, tst, ref_fg, tst_fg)
-
-    ref_gray = rgb2gray(ref)
-    tst_gray = rgb2gray(tst)
+    ref_gray = rgb2gray(ref_rgb)
+    tst_gray = rgb2gray(tst_rgb)
     ssim_score = float(ssim(ref_gray, tst_gray, data_range=1.0))
 
     ref_edge = apply_ignore(canny(ref_gray, sigma=2), args.ignore_rect)
     tst_edge = apply_ignore(canny(tst_gray, sigma=2), args.ignore_rect)
     e_union = np.logical_or(ref_edge, tst_edge).sum()
-    edge_iou = float(np.logical_and(ref_edge, tst_edge).sum()/e_union) if e_union > 0 else 0.0
+    edge_iou = float(np.logical_and(ref_edge, tst_edge).sum() / e_union) if e_union > 0 else 0.0
 
     weights = {
-        'silhouette_iou': 0.30,
+        'silhouette_iou': 0.35,
         'bbox_similarity': 0.15,
-        'color_hist_similarity': 0.15,
-        'ssim': 0.25,
-        'edge_iou': 0.15,
+        'color_hist_similarity': 0.10,
+        'ssim': 0.20,
+        'edge_iou': 0.20,
     }
     scores = {
         'silhouette_iou': silhouette_iou,
@@ -143,21 +163,23 @@ def main() -> None:
         'reference': args.reference,
         'render': args.render,
         'ignore_rects': args.ignore_rect,
+        'render_uses_alpha_mask': transparent,
         'aligned_render_size': list(ref_img.size),
         'scores': scores,
         'weights': weights,
-        'combined_score_0_to_100': round(combined*100, 4),
+        'combined_score_0_to_100': round(combined * 100, 4),
         'interpretation': {
             '90_plus': 'Very close silhouette and detail match',
             '75_to_89': 'Strong resemblance, moderate visible differences',
             '60_to_74': 'Moderate resemblance, still clear gaps',
             'below_60': 'Large gap from reference',
-        }
+        },
     }
+
     Path(args.out_json).write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding='utf-8')
-    md = f'''# Similarity Report v2\n\n- Reference: `{Path(args.reference).name}`\n- Render: `{Path(args.render).name}`\n- Combined score: **{combined*100:.2f} / 100**\n- Ignore rects: `{args.ignore_rect}`\n\n## Metric breakdown\n\n| Metric | Score | Weight |\n|---|---:|---:|\n| Silhouette IoU | {silhouette_iou:.4f} | {weights['silhouette_iou']:.2f} |\n| Bounding-box similarity | {box_sim:.4f} | {weights['bbox_similarity']:.2f} |\n| Color histogram similarity | {hsim:.4f} | {weights['color_hist_similarity']:.2f} |\n| SSIM | {ssim_score:.4f} | {weights['ssim']:.2f} |\n| Edge IoU | {edge_iou:.4f} | {weights['edge_iou']:.2f} |\n'''
+    md = f'''# Similarity Report v3\n\n- Reference: `{Path(args.reference).name}`\n- Render: `{Path(args.render).name}`\n- Combined score: **{combined*100:.2f} / 100**\n- Ignore rects: `{args.ignore_rect}`\n- Render alpha mask used: `{transparent}`\n\n## Metric breakdown\n\n| Metric | Score | Weight |\n|---|---:|---:|\n| Silhouette IoU | {silhouette_iou:.4f} | {weights['silhouette_iou']:.2f} |\n| Bounding-box similarity | {box_sim:.4f} | {weights['bbox_similarity']:.2f} |\n| Color histogram similarity | {hsim:.4f} | {weights['color_hist_similarity']:.2f} |\n| SSIM | {ssim_score:.4f} | {weights['ssim']:.2f} |\n| Edge IoU | {edge_iou:.4f} | {weights['edge_iou']:.2f} |\n'''
     Path(args.out_md).write_text(md, encoding='utf-8')
-    make_overlay(ref_img, render_img, args.ignore_rect, Path(args.out_overlay))
+    overlay_preview(ref_rgb, tst_rgb, tst_fg, args.ignore_rect, Path(args.out_overlay))
     print(json.dumps(result, indent=2, ensure_ascii=False))
 
 if __name__ == '__main__':
