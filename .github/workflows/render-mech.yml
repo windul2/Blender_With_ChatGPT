@@ -1,4 +1,4 @@
-name: Build Render and Score Hero Chibi Mech V11
+name: Build Render and Score Hero Chibi Mech V12
 
 on:
   workflow_dispatch:
@@ -33,7 +33,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: mech-render-score-v11-${{ github.ref }}
+  group: mech-render-score-v12-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -44,7 +44,7 @@ env:
 
 jobs:
   model-render-score:
-    name: Render mech and compute similarity score
+    name: Render V12 mech and compute similarity score
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -125,7 +125,8 @@ jobs:
             --render output/mech_render.png \
             --out-json report/similarity_report.json \
             --out-md report/similarity_report.md \
-            --out-overlay report/reference_render_overlay.png | tee report/score_stdout.json
+            --out-overlay report/reference_render_overlay.png \
+            --ignore-rect 0,0,180,170 | tee report/score_stdout.json
 
       - name: Add score to job summary
         shell: bash
@@ -149,7 +150,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mech-render-score-v11-${{ github.run_number }}
+          name: mech-render-score-v12-${{ github.run_number }}
           path: |
             output/
             report/
