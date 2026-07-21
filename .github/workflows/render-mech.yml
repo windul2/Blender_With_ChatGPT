@@ -1,4 +1,4 @@
-name: Build and Render Hero Chibi Mech V2
+name: Build and Render Hero Chibi Mech V3
 
 on:
   workflow_dispatch:
@@ -16,13 +16,14 @@ on:
       samples:
         description: "Cycles 렌더 샘플 수"
         required: true
-        default: "128"
+        default: "160"
         type: choice
         options:
           - "64"
           - "96"
           - "128"
           - "160"
+          - "192"
   push:
     branches:
       - main
@@ -43,11 +44,11 @@ env:
   BLENDER_VERSION: "4.5.11"
   BLENDER_SERIES: "4.5"
   RENDER_RESOLUTION: ${{ inputs.resolution || '1024' }}
-  RENDER_SAMPLES: ${{ inputs.samples || '128' }}
+  RENDER_SAMPLES: ${{ inputs.samples || '160' }}
 
 jobs:
   model-and-render:
-    name: Create upgraded hero chibi mech and render PNG
+    name: Create reference-inspired hero chibi mech and render PNG
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -171,7 +172,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: hero-chibi-mech-v2-${{ github.run_number }}
+          name: hero-chibi-mech-v3-${{ github.run_number }}
           path: output/
           if-no-files-found: warn
           retention-days: 30
